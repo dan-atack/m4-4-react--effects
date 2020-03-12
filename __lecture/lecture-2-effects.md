@@ -314,10 +314,14 @@ Make sure to do the appropriate cleanup work
 ```js
 // seTimeout is similar to setInterval...
 const App = () => {
-  React.useEffect(() => {
-    window.setTimeout(() => {
+  const timer = window.setTimeout(() => {
       console.log('1 second after update!')
-    });
+  }, 1000);
+  React.useEffect(() => {
+    // down here we're returning a function that says to shut down the timer just as we leave the page.
+    return () => {
+      clearTimeout(timer);
+    }
   }, [])
 
   return null;
@@ -328,10 +332,16 @@ const App = () => {
 
 ```js
 const App = () => {
+  // Always embed listeners inside the useEffect function to avoid fucked up chaos AKA the worst type of chaos.
   React.useEffect(() => {
     window.addEventListener('keydown', (ev) => {
       console.log('You pressed: ' + ev.code);
     })
+    return () => {
+      window.removeEventListener('keydown', (ev) => {
+        console.log('You pressed: ' + ev.code);
+      })
+    }
   }, [])
 
   return null;
@@ -373,6 +383,7 @@ Tracking mouse position
 <div class="col">
 
 ```js
+/// this component and function are updated below to 'abstract out' the custom setMousePosition hook from the app that uses it.
 const App = ({ path }) => {
   const [mousePosition, setMousePosition] = React.useState({
     x: null,
@@ -390,6 +401,7 @@ const App = ({ path }) => {
       window.removeEventListener('mousemove', handleMousemove)
     }
   }, []);
+  const mousePosition = useMousePos
 
   return (
     <div>
@@ -403,7 +415,35 @@ const App = ({ path }) => {
 
 ```js
 // refactoring time...
+const useMousePos = () => {
+  const [mousePosition, setMousePosition] = React.useState({
+    x: null,
+    y: null
+  });
 
+  React.useEffect(() => {
+    const handleMousemove = (ev) => {
+      setMousePosition({ x: ev.clientX, y: ev.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMousemove);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMousemove)
+    }
+  }, []);
+}
+
+const App = ({ path }) => {
+
+  const mousePosition = useMousePos
+
+    return (
+      <div>
+        The mouse is at {mousePosition.x}, {mousePosition.y}.
+      </div>
+    )
+}
 ```
 </div>
 </div>
@@ -417,16 +457,25 @@ Extract a custom hook
 ---
 
 ```js
-const App = ({ path }) => {
+// Same thing here: Custom hook goes outside the app so you can use it many times:
+const useDataFetch = (path) => {
   const [data, setData] = React.useState(null);
 
+
+  // useEffect is async??!!
   React.useEffect(() => {
     fetch(path)
       .then(res => res.json())
       .then(json => {
         setData(json);
-      })
+        // don't forget to spit out all that data you've worked so hard to process!
+        return data;
+      });
   }, [path])
+};
+
+const App = ({ path }) => {
+  const data = useDataFetch(path);
 
   return (
     <span>
