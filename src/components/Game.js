@@ -1,67 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
-import useInterval from '../hooks/use-interval.hook';
+import { GameContext } from './GameContext';
 
 import cookieSrc from '../cookie.svg';
 import Item from './Item';
-import cookieCalculator from './cookieCalculator';
-
-const items = [
-  { id: 'cursor', name: 'Cursor', cost: 10, value: 1 },
-  { id: 'grandma', name: 'Grandma', cost: 100, value: 10 },
-  { id: 'farm', name: 'Farm', cost: 1000, value: 80 },
-  { id: 'complex', name: 'Cookie-Industrial Complex', cost: 12500, value: 750 }
-];
 
 const Game = () => {
 
-  // const reference = React.useRef(null);
+  const { numCookies, setNumCookies, purchasedItems, setPurchasedItems, cookiesPerSecond, deltaT, setDeltaT } = React.useContext(GameContext);
 
-  // React.useEffect(() => {
-  //   reference.current.focus();
-  // })
+  const items = [
+    { id: 'cursor', name: 'Cursor', cost: 10, value: 1 },
+    { id: 'grandma', name: 'Grandma', cost: 100, value: 10 },
+    { id: 'farm', name: 'Farm', cost: 1000, value: 80 },
+    { id: 'complex', name: 'Cookie-Industrial Complex', cost: 12500, value: 750 }
+  ];
 
-  const [numCookies, setNumCookies] = React.useState(100);
-
-  const [purchasedItems, setPurchasedItems] = React.useState({
-    cursor: 0,
-    grandma: 0,
-    farm: 0,
-    complex: 0
-  })
-
-  useInterval(() => {
-    let cookiesPerSecond = cookieCalculator(purchasedItems);
-    setNumCookies(numCookies+cookiesPerSecond);
-  }, 1000);
-
+  // Effect for updating the tab title:
   React.useEffect(() => {
     document.title = `Cookie Clicker: ${numCookies} cookies`;
-
-  // Cleanup mechanism:
-  // it 'fires' each of these statements whenever the numCookies is updated, and the last time it fires is when you exit,
+  // Cleanup mechanism: 'fires' each of these statements whenever the numCookies is updated, and the last time it fires is when you exit,
   // so it winds up on the original title because the reset to the cookie number title would happen right AFTER you leave the page.
-
     return () => {
       document.title = "Cookie Cutter Workshop"
     };
 
   }, [numCookies]);
 
-
+  // Effect for handling the spacebar to harvest cookies:
   React.useEffect(() =>  {
-  const spaceKeyHandler = (ev) => {
-    if (ev.key === " ") {
-      setNumCookies(numCookies + 1);
-    }
-  }
+    const spaceKeyHandler = ev => {
+      if (ev.key === " ") {
+        setNumCookies(numCookies+1);
+      }
+    };
     document.addEventListener("keyup", spaceKeyHandler);
 
     return () => {
       document.removeEventListener("keyup", spaceKeyHandler)
     };
-  }, []);
+  }, [numCookies]);
 
   return (
     <Wrapper>
@@ -71,13 +50,22 @@ const Game = () => {
       <GameArea>
         <Indicator>
           <Total>{numCookies} cookies</Total>
-          <strong>{cookieCalculator(purchasedItems)}</strong> cookies per second
+          <strong>{cookiesPerSecond}</strong> cookies per second
         </Indicator>
         <Button onClick={ev => {
           setNumCookies(numCookies+1);
         }}>
           <Cookie src={cookieSrc} />
         </Button>
+        <Button onClick={ev => {
+          setNumCookies(100);
+          setPurchasedItems({
+            cursor: 0,
+            grandma: 0,
+            farm: 0,
+            complex: 0,
+            })
+        }}>RESET Cookie Wealth and assets</Button>
       </GameArea>
       <ItemArea>
         <SectionTitle>Items:</SectionTitle>

@@ -3,13 +3,13 @@
 import PropTypes from 'prop-types';
 
 
-const cookieCalculator = (factorsOfProduction) => {
+const CookieCalculator = factorsOfProduction => {
     return (   
         (factorsOfProduction.cursor + (factorsOfProduction.grandma * 10) + (factorsOfProduction.farm * 80) + (factorsOfProduction.complex * 750))
     )
 };
 
-cookieCalculator.PropTypes = {
+CookieCalculator.PropTypes = {
     purchasedItems: PropTypes.shape({
         cursor: PropTypes.number.isRequired,
         grandma: PropTypes.number.isRequired,
@@ -18,4 +18,4 @@ cookieCalculator.PropTypes = {
     })
 };
 
-export default cookieCalculator;
+export default CookieCalculator;
