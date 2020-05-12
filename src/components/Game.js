@@ -1,39 +1,91 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import styled from 'styled-components';
+import { GameContext } from './GameContext';
 
 import cookieSrc from '../cookie.svg';
-
-const items = [
-  { id: 'cursor', name: 'Cursor', cost: 10, value: 1 },
-  { id: 'grandma', name: 'Grandma', cost: 100, value: 10 },
-  { id: 'farm', name: 'Farm', cost: 1000, value: 80 },
-];
+import Item from './Item';
 
 const Game = () => {
-  // TODO: Replace this with React state!
-  const numCookies = 100;
-  const purchasedItems = {
-    cursor: 0,
-    grandma: 0,
-    farm: 0,
-  };
+
+  const { numCookies, setNumCookies, purchasedItems, setPurchasedItems, cookiesPerSecond, deltaT, setDeltaT } = React.useContext(GameContext);
+
+  const items = [
+    { id: 'cursor', name: 'Cursor', cost: 10, value: 1 },
+    { id: 'grandma', name: 'Grandma', cost: 100, value: 10 },
+    { id: 'farm', name: 'Farm', cost: 1000, value: 80 },
+    { id: 'complex', name: 'Cookie-Industrial Complex', cost: 12500, value: 750 }
+  ];
+
+  // Effect for updating the tab title:
+  React.useEffect(() => {
+    document.title = `Cookie Clicker: ${numCookies} cookies`;
+  // Cleanup mechanism: 'fires' each of these statements whenever the numCookies is updated, and the last time it fires is when you exit,
+  // so it winds up on the original title because the reset to the cookie number title would happen right AFTER you leave the page.
+    return () => {
+      document.title = "Cookie Cutter Workshop"
+    };
+
+  }, [numCookies]);
+
+  // Effect for handling the spacebar to harvest cookies:
+  React.useEffect(() =>  {
+    const spaceKeyHandler = ev => {
+      if (ev.key === " ") {
+        setNumCookies(numCookies+1);
+      }
+    };
+    document.addEventListener("keyup", spaceKeyHandler);
+
+    return () => {
+      document.removeEventListener("keyup", spaceKeyHandler)
+    };
+  }, [numCookies]);
 
   return (
     <Wrapper>
+      <StyledLink>
+        <Link to="/">Take me Home</Link>
+      </StyledLink>
       <GameArea>
         <Indicator>
           <Total>{numCookies} cookies</Total>
-          {/* TODO: Calcuate the cookies per second and show it here: */}
-          <strong>0</strong> cookies per second
+          <strong>{cookiesPerSecond}</strong> cookies per second
         </Indicator>
-        <Button>
+        <Button onClick={ev => {
+          setNumCookies(numCookies+1);
+        }}>
           <Cookie src={cookieSrc} />
         </Button>
+        <Button onClick={ev => {
+          setNumCookies(100);
+          setPurchasedItems({
+            cursor: 0,
+            grandma: 0,
+            farm: 0,
+            complex: 0,
+            })
+        }}>RESET Cookie Wealth and assets</Button>
       </GameArea>
-
       <ItemArea>
         <SectionTitle>Items:</SectionTitle>
-        {/* TODO: Add <Item> instances here, 1 for each item type. */}
+        {items.map((item, idx) => {
+          return (
+            <Item key={item.id} 
+            indexPos={idx}
+            name={item.name} 
+            cost={item.cost} 
+            value={item.value}
+            numOwned={purchasedItems[item.id]}
+            handleClick={() => {
+              if (item.cost <= numCookies) {
+                setNumCookies(numCookies-item.cost);
+                // Instantly a fan of object spreading:
+                setPurchasedItems({...purchasedItems, [item.id]: (purchasedItems[item.id]+1)});
+              }
+            }}/>
+          );
+        })}
       </ItemArea>
     </Wrapper>
   );
@@ -42,6 +94,7 @@ const Game = () => {
 const Wrapper = styled.div`
   display: flex;
   height: 100vh;
+    
 `;
 const GameArea = styled.div`
   flex: 1;
@@ -86,5 +139,11 @@ const Total = styled.h3`
   font-size: 28px;
   color: lime;
 `;
+
+const StyledLink = styled.button`
+  height: 64px;
+  width: 128px;
+  background-color: darkblue;
+`
 
 export default Game;
